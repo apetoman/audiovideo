@@ -1,0 +1,106 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "29.0.3"
+
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+
+    implementation('com.squareup.retrofit2:converter-gson:2.4.0') {
+        exclude module: 'gson'
+        exclude module: 'okhttp'
+        exclude module: 'okio'
+        exclude module: 'retrofit'
+    }
+
+
+    implementation('io.reactivex.rxjava2:rxandroid:2.1.0') {
+        exclude module: 'rxjava'
+    }
+    implementation('io.reactivex.rxjava2:rxjava:2.2.4') {
+        exclude module: 'rxjava'
+        exclude module: 'okhttp'
+        exclude module: 'retrofit'
+        exclude module: 'okio'
+    }
+    implementation 'com.google.code.gson:gson:2.8.2'
+
+    implementation('com.squareup.retrofit2:adapter-rxjava2:2.4.0') {
+        exclude module: 'rxjava'
+        exclude module: 'okhttp'
+        exclude module: 'retrofit'
+        exclude module: 'okio'
+    }
+    implementation('com.squareup.retrofit2:converter-gson:2.4.0') {
+        exclude module: 'gson'
+        exclude module: 'okhttp'
+        exclude module: 'okio'
+        exclude module: 'retrofit'
+    }
+    implementation('com.squareup.okhttp3:okhttp:3.11.0')
+
+    implementation('com.squareup.retrofit2:retrofit:2.4.0') {
+        exclude module: 'okhttp'
+        exclude module: 'okio'
+    }
+
+    implementation('com.github.ihsanbal:LoggingInterceptor:3.1.0-rc5') {
+        exclude group: 'org.json', module: 'json'
+    }
+    //音视频
+    implementation 'com.tencent.liteav:LiteAVSDK_TRTC:latest.release'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    //ut
+    api 'com.blankj:utilcode:1.25.9'
+    //
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
+    //圆img
+    implementation 'de.hdodenhof:circleimageview:3.0.1'
+    //sup库
+    implementation 'com.android.support:design:28.0.0'
+
+    //腾讯IM
+    api 'com.tencent.imsdk:tuikit:4.6.101'
+
+    implementation 'com.huawei.android.hms:push:2.6.3.301'
+    implementation 'com.huawei.android.hms:base:2.6.3.301'
+    // MEIZU push sdk
+    implementation 'com.meizu.flyme.internet:push-internal:3.6.+@aar'
+
+    //图片加载
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+}
+apply from: 'bintray.gradle'

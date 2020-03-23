@@ -1,0 +1,92 @@
+apply plugin: 'com.android.application'
+
+
+//签名文件配置
+def propsFile = file("./keystore/key-config.properties")
+Properties keyProps = new Properties()
+keyProps.load(new FileInputStream(propsFile))
+//打包时间
+static def packageTime() {
+    return new Date().format("yyyy-MM-dd", TimeZone.getTimeZone("UTC-8"))
+}
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "29.0.3"
+    defaultConfig {
+        applicationId "com.eju.cy.audiovideosample"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+
+        ndk {
+            abiFilters = ['armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64']
+            //abiFilters "armeabi", "armeabi-v7a", "arm64-v8a"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    signingConfigs {
+        def vStoreFile = file(keyProps['storeFile'].toString())
+        def vStorePwd = keyProps['storePassword'].toString()
+        def vKeyAlias = keyProps['keyAlias'].toString()
+        def vKeyPwd = keyProps['keyPassword'].toString()
+        release {
+            storeFile vStoreFile
+            storePassword vStorePwd
+            keyAlias vKeyAlias
+            keyPassword vKeyPwd
+        }
+    }
+    //修改生成的最终文件名
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "Onemile-v${variant.versionName}-${variant.name}-${packageTime()}.apk"
+        }
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            buildConfigField "boolean", "USE_CANARY", "false"
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        release {
+            buildConfigField "boolean", "LOG_DEBUG", "false"
+            buildConfigField "boolean", "USE_CANARY", "false"
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+
+    implementation 'com.tencent.liteav:LiteAVSDK_TRTC:latest.release'
+
+    implementation project(':audiovideo')
+   // implementation 'com.eju.cy.audiovideo:audiovideo:1.0.0'
+}
