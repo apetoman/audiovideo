@@ -1,0 +1,40 @@
+apply plugin: 'com.novoda.bintray-release'
+//项目主页
+def siteUrl = 'https://github.com/apetoman/audiovideo'
+
+/*
+* gradlew clean build bintrayUpload -PbintrayUser=zmcat -PbintrayKey=616d1bceeef0c5fe4b78b278c3bec52c505e50b8 -PdryRun=false
+upload card tool
+*/
+publish {
+    repoName = 'maven'
+    userOrg = 'ejujdhome'
+    groupId = 'com.eju.cy.audiovideo'
+    artifactId = 'audiovideo'
+    publishVersion = '1.0.1'
+    desc = '音视频IM等'
+    website = siteUrl
+}
+tasks.withType(Javadoc) {//防止编码问题
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+    options.addStringOption('charSet', 'UTF-8')
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+task javadoc(type: Javadoc) {
+    failOnError false
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}

@@ -88,5 +88,5 @@ dependencies {
     implementation 'com.tencent.liteav:LiteAVSDK_TRTC:latest.release'
 
     implementation project(':audiovideo')
-   // implementation 'com.eju.cy.audiovideo:audiovideo:1.0.0'
+    //implementation 'com.eju.cy.audiovideo:audiovideo:1.0.0'
 }
