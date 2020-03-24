@@ -11,7 +11,7 @@ publish {
     userOrg = 'ejujdhome'
     groupId = 'com.eju.cy.audiovideo'
     artifactId = 'audiovideo'
-    publishVersion = '1.0.1'
+    publishVersion = '1.0.0'
     desc = '音视频IM等'
     website = siteUrl
 }

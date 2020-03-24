@@ -23,6 +23,8 @@ import com.tencent.trtc.TRTCCloudListener;
 
 import java.util.ArrayList;
 
+import static com.eju.cy.audiovideo.im.helper.CustomMessage.VIDEO_CALL_ACTION_ACCEPTED;
+
 public class AudioCallMainActivity extends Activity {
     private static final String TAG = AudioCallMainActivity.class.getName();
 
@@ -63,7 +65,8 @@ public class AudioCallMainActivity extends Activity {
 
         @Override
         public void onError(int errCode, String errMsg, Bundle extraInfo) {
-            ToastUtils.showLong("进房失败: " + errCode);
+            ToastUtils.showLong("进房失败: " + errMsg);
+            LogUtils.w("失败" + errMsg + "" + errCode);
             finish();
         }
 
@@ -238,6 +241,8 @@ public class AudioCallMainActivity extends Activity {
     }
 
     private void enterTRTCRoom() {
+
+
         mTRTCCloud.enableAudioVolumeEvaluation(800);
         mTRTCCloud.setListener(mTRTCCloudListener);
         mTRTCCloud.startLocalAudio();
@@ -248,6 +253,14 @@ public class AudioCallMainActivity extends Activity {
         params.sdkAppId = GenerateTestUserSig.SDKAPPID;
         params.role = TRTCCloudDef.TRTCRoleAnchor;
         params.userId = mUserId;
+
+
+        LogUtils.w("---userSig" + params.userSig);
+        LogUtils.w("---参数" + params.roomId);
+        LogUtils.w("---sdkAppId" + params.sdkAppId);
+
+        LogUtils.w("---userId" + params.userId);
+
         mTRTCCloud.enterRoom(params, TRTCCloudDef.TRTC_APP_SCENE_AUDIOCALL);
     }
 

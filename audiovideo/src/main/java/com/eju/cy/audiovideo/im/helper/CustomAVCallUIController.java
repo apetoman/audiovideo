@@ -12,10 +12,12 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.eju.cy.audiovideo.GenerateTestUserSig;
 import com.eju.cy.audiovideo.R;
 import com.eju.cy.audiovideo.audio.activity.AudioCallMainActivity;
+import com.eju.cy.audiovideo.im.dialog.ImTrtcDialog;
 import com.eju.cy.audiovideo.im.entrance.EjuImController;
 import com.eju.cy.audiovideo.im.utils.Constants;
 import com.eju.cy.audiovideo.im.utils.DemoLog;
@@ -52,9 +54,9 @@ public class CustomAVCallUIController extends TRTCCloudListener {
 
     private static final String TAG = CustomAVCallUIController.class.getSimpleName();
 
-    private static final int VIDEO_CALL_STATUS_FREE = 1;
-    private static final int VIDEO_CALL_STATUS_BUSY = 2;
-    private static final int VIDEO_CALL_STATUS_WAITING = 3;
+    private static final int VIDEO_CALL_STATUS_FREE = 1; //空闲
+    private static final int VIDEO_CALL_STATUS_BUSY = 2; //忙
+    private static final int VIDEO_CALL_STATUS_WAITING = 3;//等待
     //视频通话状态
     private int mCurrentVideoCallStatus = VIDEO_CALL_STATUS_FREE;
 
@@ -65,14 +67,15 @@ public class CustomAVCallUIController extends TRTCCloudListener {
     private CustomMessage mOnlineCall;
     private ChatLayout mUISender;
     private TRTCDialog mDialog;
+    private ImTrtcDialog mTrtcDialog;
     private TRTCCloud mTRTCCloud;
     private static Context context;
     private Context activityContext;
     WeakReference<Activity> mWeakReference;
 
 
-    private static final int VIDEO_CALL_OUT_GOING_TIME_OUT = 20 * 1000;
-    private static final int VIDEO_CALL_OUT_INCOMING_TIME_OUT = 20 * 1000;
+    private static final int VIDEO_CALL_OUT_GOING_TIME_OUT = 1000 * 1000;
+    private static final int VIDEO_CALL_OUT_INCOMING_TIME_OUT = 1000 * 1000;
     private Handler mHandler = new Handler();
     //对方无应答
     private Runnable mVideoCallOutgoingTimeOut = new Runnable() {
@@ -271,24 +274,25 @@ public class CustomAVCallUIController extends TRTCCloudListener {
                                        boolean isAudioCall) {
 
         // 显示通话UI
-        boolean success = showOutgoingDialingDialog();
+        // boolean success = showOutgoingDialingDialog();
 
 
-        if (success) {
-            //设置当前用户视频状态
-            mCurrentVideoCallStatus = VIDEO_CALL_STATUS_BUSY;
-            //组装视频电话
-            assembleOnlineCall(null, userId, userPortrait, userName, othersUserId, othersUserPortrait, othersUserName, roomId, isAudioCall);
+        // if (success) {
+        //设置当前用户视频状态
+        mCurrentVideoCallStatus = VIDEO_CALL_STATUS_BUSY;
+        //组装视频电话
+        assembleOnlineCall(null, userId, userPortrait, userName, othersUserId, othersUserPortrait, othersUserName, roomId, isAudioCall);
 
-            sendVideoCallAction(VIDEO_CALL_ACTION_DIALING, mOnlineCall);
-            //删除所有回调消息
-            mHandler.removeCallbacksAndMessages(null);
-            //对方无应答
-            mHandler.postDelayed(mVideoCallOutgoingTimeOut, VIDEO_CALL_OUT_GOING_TIME_OUT);
+        sendVideoCallAction(VIDEO_CALL_ACTION_DIALING, mOnlineCall);
+        //删除所有回调消息
+        mHandler.removeCallbacksAndMessages(null);
+        //对方无应答
+        //mHandler.postDelayed(mVideoCallOutgoingTimeOut, VIDEO_CALL_OUT_GOING_TIME_OUT);
 
-        } else {
-            Toast.makeText(activityContext, "发起通话失败，没有弹出对话框权限", Toast.LENGTH_SHORT).show();
-        }
+        enterAudioRoom();
+        // } else {
+        //Toast.makeText(activityContext, "发起通话失败，没有弹出对话框权限", Toast.LENGTH_SHORT).show();
+        // }
     }
 
 
@@ -297,6 +301,14 @@ public class CustomAVCallUIController extends TRTCCloudListener {
         mCurrentVideoCallStatus = VIDEO_CALL_STATUS_FREE;
         sendVideoCallAction(VIDEO_CALL_ACTION_HANGUP, mOnlineCall);
     }
+
+
+    public void intoRoom() {
+        DemoLog.i(TAG, "hangup");
+        mCurrentVideoCallStatus = VIDEO_CALL_STATUS_FREE;
+        sendVideoCallAction(VIDEO_CALL_ACTION_HANGUP, mOnlineCall);
+    }
+
 
     private void enterRoom() {
         final Intent intent = new Intent(context, TRTCActivity.class);
@@ -311,7 +323,7 @@ public class CustomAVCallUIController extends TRTCCloudListener {
         final Intent intent = new Intent(context, AudioCallMainActivity.class);
         intent.putExtra(Constants.ROOM_ID, mOnlineCall.room_id);
 
-        intent.putExtra(Constants.USER_ID, mOnlineCall.othersUserId);
+        intent.putExtra(Constants.USER_ID, mOnlineCall.userId);
         intent.putExtra(Constants.USER_NAME, mOnlineCall.othersUserName);
         intent.putExtra(Constants.USER_PORTRAIT, mOnlineCall.othersUserPortrait);
         activityContext.startActivity(intent);
@@ -322,9 +334,9 @@ public class CustomAVCallUIController extends TRTCCloudListener {
         final Intent intent = new Intent(context, AudioCallMainActivity.class);
         intent.putExtra(Constants.ROOM_ID, mOnlineCall.room_id);
 
-        intent.putExtra(Constants.USER_ID, mOnlineCall.getUserId());
-        intent.putExtra(Constants.USER_NAME, mOnlineCall.getUserName());
-        intent.putExtra(Constants.USER_PORTRAIT, mOnlineCall.getUserPortrait());
+        intent.putExtra(Constants.USER_ID, mOnlineCall.othersUserId);
+        intent.putExtra(Constants.USER_NAME, mOnlineCall.othersUserName);
+        intent.putExtra(Constants.USER_PORTRAIT, mOnlineCall.othersUserPortrait);
         activityContext.startActivity(intent);
     }
 
@@ -367,7 +379,7 @@ public class CustomAVCallUIController extends TRTCCloudListener {
             TUIKitLog.w("ccc发送的自定义消息", data);
             TUIKitLog.w("ccc创建回话", roomInfo.getPartner());
             TIMConversation con = TIMManager.getInstance().getConversation(TIMConversationType.C2C, roomInfo.getPartner());
-            con.sendMessage(info.getTIMMessage(), new TIMValueCallBack<TIMMessage>() {
+            con.sendOnlineMessage(info.getTIMMessage(), new TIMValueCallBack<TIMMessage>() {
 
                 @Override
                 public void onError(int code, String desc) {
@@ -385,7 +397,7 @@ public class CustomAVCallUIController extends TRTCCloudListener {
             TUIKitLog.w("发送的自定义消息", data);
             TUIKitLog.w("创建回话", roomInfo.getPartner());
             TIMConversation con = TIMManager.getInstance().getConversation(TIMConversationType.C2C, roomInfo.getPartner());
-            con.sendMessage(info.getTIMMessage(), new TIMValueCallBack<TIMMessage>() {
+            con.sendOnlineMessage(info.getTIMMessage(), new TIMValueCallBack<TIMMessage>() {
 
                 @Override
                 public void onError(int code, String desc) {
@@ -473,6 +485,7 @@ public class CustomAVCallUIController extends TRTCCloudListener {
 
             //
             mOnlineCall.setUserId(userId);
+
             mOnlineCall.setUserPortrait(userPortrait);
             mOnlineCall.setUserName(userName);
 
@@ -480,9 +493,11 @@ public class CustomAVCallUIController extends TRTCCloudListener {
             mOnlineCall.setOthersUserPortrait(othersUserPortrait);
             mOnlineCall.setOthersUserName(othersUserName);
             mOnlineCall.setAudioCall(isAudioCall);
-
+            mOnlineCall.action = 0;
+            mOnlineCall.version = 3;
+            DemoLog.w(TAG, "组装视频电话有数据------1111" + mOnlineCall.toString());
         } else {
-            DemoLog.w(TAG, "组装视频电话有数据------22222");
+
             mOnlineCall.call_id = roomInfo.call_id;
             mOnlineCall.room_id = roomInfo.room_id;
             mOnlineCall.invited_list = roomInfo.invited_list;
@@ -492,12 +507,13 @@ public class CustomAVCallUIController extends TRTCCloudListener {
             mOnlineCall.setUserId(roomInfo.getUserId());
             mOnlineCall.setUserPortrait(roomInfo.getUserPortrait());
             mOnlineCall.setUserName(roomInfo.getUserName());
-
+            mOnlineCall.action = roomInfo.action;
+            mOnlineCall.version = roomInfo.version;
             mOnlineCall.setOthersUserId(roomInfo.getOthersUserId());
             mOnlineCall.setOthersUserPortrait(roomInfo.getOthersUserPortrait());
             mOnlineCall.setOthersUserName(roomInfo.getOthersUserName());
             mOnlineCall.setAudioCall(roomInfo.isAudioCall());
-
+            DemoLog.w(TAG, "组装视频电话有数据------22222" + mOnlineCall.toString());
         }
     }
 
@@ -505,10 +521,14 @@ public class CustomAVCallUIController extends TRTCCloudListener {
         CustomMessage data = CustomMessage.convert2VideoCallData(msgs);
         if (data != null) {
             onNewComingCall(data);
+            LogUtils.w("data有数据");
+        } else {
+            LogUtils.w("data为空");
         }
     }
 
     private void onNewComingCall(CustomMessage message) {
+        LogUtils.w("接收到的消息" + message.toString() + "");
         DemoLog.i(TAG, "onNewComingCall current state: " + mCurrentVideoCallStatus
                 + " call_id action: " + message.action
                 + " coming call_id: " + message.call_id
@@ -527,7 +547,7 @@ public class CustomAVCallUIController extends TRTCCloudListener {
                         // startC2CConversation(message);
                         assembleOnlineCall(message);
                         showCallDialog();
-                        DemoLog.w(TAG, "---VIDEO_CALL_ACTION_DIALING");
+                        DemoLog.w(TAG, "---VIDEO_CALL_ACTION_DIALING---");
                     } else {
                         sendVideoCallAction(VIDEO_CALL_ACTION_LINE_BUSY, message);
                     }
@@ -563,8 +583,8 @@ public class CustomAVCallUIController extends TRTCCloudListener {
                         dismissDialog();
                     }
 
-                    assembleOnlineCall(message);
-                    enterAudioRoom();
+                    //assembleOnlineCall(message);
+                    // enterAudioRoom();
 
                     break;
                 case VIDEO_CALL_ACTION_HANGUP:
@@ -618,12 +638,16 @@ public class CustomAVCallUIController extends TRTCCloudListener {
     }
 
     private boolean showIncomingDialingDialog() {
+        dismissImDialog();
         dismissDialog();
         mHandler.removeCallbacksAndMessages(null);
         mHandler.postDelayed(mVideoCallIncomingTimeOut, VIDEO_CALL_OUT_INCOMING_TIME_OUT);
-        mDialog = new TRTCDialog(activityContext);
-        mDialog.setTitle("来电话了");
-        mDialog.setPositiveButton("接听", new View.OnClickListener() {
+
+
+        //LogUtils.w(" mOnlineCall.partner" + mOnlineCall.userPortrait);
+        mTrtcDialog = new ImTrtcDialog(activityContext, mOnlineCall.userPortrait, mOnlineCall.userName);
+
+        mTrtcDialog.setPositiveButton(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DemoLog.i(TAG, "VIDEO_CALL_ACTION_ACCEPTED");
@@ -633,7 +657,7 @@ public class CustomAVCallUIController extends TRTCCloudListener {
                 othersEnterAudioRoom();
             }
         });
-        mDialog.setNegativeButton("拒绝", new View.OnClickListener() {
+        mTrtcDialog.setNegativeButton(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DemoLog.i(TAG, "VIDEO_CALL_ACTION_REJECT");
@@ -642,7 +666,9 @@ public class CustomAVCallUIController extends TRTCCloudListener {
                 sendVideoCallAction(VIDEO_CALL_ACTION_REJECT, mOnlineCall);
             }
         });
-        return mDialog.showSystemDialog();
+        return mTrtcDialog.showSystemDialog();
+
+
     }
 
     private boolean showOutgoingDialingDialog() {
@@ -665,6 +691,13 @@ public class CustomAVCallUIController extends TRTCCloudListener {
         mHandler.removeCallbacksAndMessages(null);
         if (mDialog != null) {
             mDialog.dismiss();
+        }
+    }
+
+    private void dismissImDialog() {
+        mHandler.removeCallbacksAndMessages(null);
+        if (mTrtcDialog != null) {
+            mTrtcDialog.dismiss();
         }
     }
 

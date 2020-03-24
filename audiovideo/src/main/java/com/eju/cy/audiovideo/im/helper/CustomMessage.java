@@ -1,5 +1,6 @@
 package com.eju.cy.audiovideo.im.helper;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.eju.cy.audiovideo.im.utils.DemoLog;
 import com.google.gson.Gson;
 import com.tencent.imsdk.TIMConversation;
@@ -189,15 +190,18 @@ public class CustomMessage {
             TIMConversation conversation = msg.getConversation();
             TIMConversationType type = conversation.getType();
             if (type != TIMConversationType.C2C) {
+
                 continue;
             }
             List<MessageInfo> list = MessageInfoUtil.TIMMessage2MessageInfo(msg, false);
             for (MessageInfo info : list) {
                 if (info.getMsgType() != MessageInfo.MSG_TYPE_CUSTOM) {
+
                     continue;
                 }
                 // 获取到自定义消息的json数据
                 if (!(info.getElement() instanceof TIMCustomElem)) {
+
                     continue;
                 }
                 TIMCustomElem elem = (TIMCustomElem) info.getElement();
@@ -206,12 +210,15 @@ public class CustomMessage {
                 try {
                     data = new Gson().fromJson(new String(elem.getData()), CustomMessage.class);
                 } catch (Exception e) {
+
                     DemoLog.e(TAG, "invalid json: " + new String(elem.getData()) + " " + e.getMessage());
                 }
                 if (data == null) {
+
                     DemoLog.e(TAG, "No Custom Data: " + new String(elem.getData()));
                     continue;
                 } else if (data.version != JSON_VERSION_3_ANDROID_IOS_TRTC) {
+
                     continue;
                 }
                 data.setPartner(info.getFromUser());

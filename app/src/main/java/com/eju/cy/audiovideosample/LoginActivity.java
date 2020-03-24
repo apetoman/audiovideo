@@ -57,10 +57,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 mTvZs.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
                 mTvLs.setBackgroundColor(getResources().getColor(R.color.white));
 
-                userId = "9027";
-                userToken = "76961c79aadd50a89a4d5d452be1fdb9b75b53ed";
-                calling = "9027";
-                listening = "211425";
+                userId = "175868";
+                userToken = "c385e1fa79af9c41c21b96ccc7c5a6267f160348";
+                calling = "17";
+                listening = "175868";
 
 
                 break;
@@ -68,8 +68,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 mTvZs.setBackgroundColor(getResources().getColor(R.color.white));
                 mTvLs.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
 
-                userId = "211425";
-                userToken = "7e1450e5b8b44eeeda88cb5cdd1186d0b85311d0";
+                userId = "17";
+                userToken = "10410254a133eb0d74afc1b5141321c07d274d9d";
                 calling = "211425";
                 listening = "9027";
 

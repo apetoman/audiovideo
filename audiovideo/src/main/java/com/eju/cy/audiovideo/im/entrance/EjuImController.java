@@ -11,6 +11,7 @@ import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.eju.cy.audiovideo.GenerateTestUserSig;
 import com.eju.cy.audiovideo.dto.RoomDto;
+import com.eju.cy.audiovideo.dto.SigDto;
 import com.eju.cy.audiovideo.dto.UpdateStatusDto;
 import com.eju.cy.audiovideo.im.helper.CustomAVCallUIController;
 import com.eju.cy.audiovideo.im.helper.ImConfigHelper;
@@ -90,6 +91,7 @@ public class EjuImController {
             @Override
             public void onNewMessages(List<TIMMessage> msgs) {
                 DemoLog.i(TAG, "onNewMessages");
+
                 CustomAVCallUIController.getInstance(application).onNewMessage(msgs);
             }
         };
@@ -107,50 +109,62 @@ public class EjuImController {
     public void loginSDK(final String userId, String userSig, final String userToken, final EjuImSdkCallBack ejuImSdkCallBack) {
 
 
-        TUIKit.login(userId, userSig, new IUIKitCallBack() {
-            @Override
-            public void onError(String module, final int code, final String desc) {
-//                runOnUiThread(new Runnable() {
-//                    public void run() {
-//                        ToastUtil.toastLongMessage("登录失败, errCode = " + code + ", errInfo = " + desc);
-//                    }
-//                });
-//                DemoLog.i(TAG, "imLogin errorCode = " + code + ", errorInfo = " + desc);
+        final AppNetInterface httpInterface = RetrofitManager.getDefault().provideClientApi(application, userId, userToken, TypeState.JDM);
+        httpInterface.genUserSig(ParameterUtils.prepareFormData("1"))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<SigDto>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
 
-                ejuImSdkCallBack.onError(module, code, desc);
-            }
+                    }
 
-            @Override
-            public void onSuccess(Object data) {
+                    @Override
+                    public void onNext(SigDto sigDto) {
 
-                ejuImSdkCallBack.onSuccess(data);
+                        if (null != sigDto && "10000".equals(sigDto.getCode())) {
+                            LogUtils.w("签名成功"+sigDto.getData().getUserSig());
 
 
-                mUserId = userId;
-                mUserToken = userToken;
+                            TUIKit.login(userId, sigDto.getData().getUserSig(), new IUIKitCallBack() {
+                                @Override
+                                public void onError(String module, final int code, final String desc) {
 
-                SharedPreferences shareInfo = application.getSharedPreferences(Constants.USERINFO, Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = shareInfo.edit();
-                editor.putBoolean(Constants.AUTO_LOGIN, true);
-                editor.commit();
 
-//                ToastUtils.showLong("登录成功");
-//                SharedPreferences shareInfo = getSharedPreferences(Constants.USERINFO, Context.MODE_PRIVATE);
-//                SharedPreferences.Editor editor = shareInfo.edit();
-//                editor.putBoolean(Constants.AUTO_LOGIN, true);
-//                editor.commit();
-//                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-//                if (userId == "211425") {
-//                    intent.putExtra(Constants.LISTENING_USER_ID, "9027");
-//                } else {
-//                    intent.putExtra(Constants.LISTENING_USER_ID, "211425");
-//                }
-//
-//
-//                startActivity(intent);
-//                finish();
-            }
-        });
+                                    ejuImSdkCallBack.onError(module, code, desc);
+                                }
+
+                                @Override
+                                public void onSuccess(Object data) {
+
+                                    ejuImSdkCallBack.onSuccess(data);
+
+
+                                    mUserId = userId;
+                                    mUserToken = userToken;
+
+                                    SharedPreferences shareInfo = application.getSharedPreferences(Constants.USERINFO, Context.MODE_PRIVATE);
+                                    SharedPreferences.Editor editor = shareInfo.edit();
+                                    editor.putBoolean(Constants.AUTO_LOGIN, true);
+                                    editor.commit();
+
+
+                                }
+                            });
+                        }
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
 
 
     }
@@ -229,13 +243,13 @@ public class EjuImController {
                         if (null != updateStatusDto && "10000".equals(updateStatusDto.getCode())) {
                             CustomAVCallUIController.getInstance().createVideoCallRequest(userId, userPortrait, userName, othersUserId, othersUserPortrait, othersUserName, mRoomId, isAudioCall);
                         } else {
-                            ToastUtils.showLong("请稍后再试"+updateStatusDto.getMsg());
+                            ToastUtils.showLong("请稍后再试" + updateStatusDto.getMsg());
                         }
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        LogUtils.w("错误"+e.toString());
+                        LogUtils.w("错误" + e.toString());
                         ToastUtils.showLong("请稍后再试222");
                     }
 
